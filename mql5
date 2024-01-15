@@ -1,0 +1,95 @@
+
+// Program: FVGs
+// Developer: Forex Robot Easy Team
+// Developer's Site: forexroboteasy.com
+
+#property strict
+
+// Define input parameters
+input int timePeriod = PERIOD_M5; // Default time period is M5
+input color longFVGColor = clrGreen; // Default color for long FVGs is Green
+input color shortFVGColor = clrRed; // Default color for short FVGs is Red
+input color middlePointColor = clrYellow; // Default color for middle point is Yellow
+
+// Define global variables
+datetime[] fvgTimestamps; // Array to store FVG timestamps
+ENUM_DIRECTION[] fvgDirections; // Array to store FVG directions
+double[] fvgMiddlePoints; // Array to store FVG middle points
+
+enum ENUM_DIRECTION
+{
+    LONG,
+    SHORT
+};
+
+// Function to identify and highlight FVGs on the trading chart
+void FindFVGs()
+{
+    int bars = Bars(_Symbol, timePeriod);
+    ArrayResize(fvgTimestamps, bars);
+    ArrayResize(fvgDirections, bars);
+    ArrayResize(fvgMiddlePoints, bars);
+
+    for (int i = 1; i < bars; i++)
+    {
+        double previousHigh = High[i-1];
+        double previousLow = Low[i-1];
+        double currentHigh = High[i];
+        double currentLow = Low[i];
+
+        if (currentHigh < previousLow) // Long FVG
+        {
+            fvgTimestamps[i] = Time[i];
+            fvgDirections[i] = ENUM_DIRECTION.LONG;
+            fvgMiddlePoints[i] = (previousLow + currentHigh) / 2;
+            PlotFVG(i);
+        }
+        else if (currentLow > previousHigh) // Short FVG
+        {
+            fvgTimestamps[i] = Time[i];
+            fvgDirections[i] = ENUM_DIRECTION.SHORT;
+            fvgMiddlePoints[i] = (previousHigh + currentLow) / 2;
+            PlotFVG(i);
+        }
+    }
+}
+
+// Function to plot FVGs on the trading chart
+void PlotFVG(int index)
+{
+    datetime timestamp = fvgTimestamps[index];
+    ENUM_DIRECTION direction = fvgDirections[index];
+    double middlePoint = fvgMiddlePoints[index];
+
+    if (direction == ENUM_DIRECTION.LONG)
+    {
+        PlotArrowUp(timestamp, middlePoint, longFVGColor);
+    }
+    else if (direction == ENUM_DIRECTION.SHORT)
+    {
+        PlotArrowDown(timestamp, middlePoint, shortFVGColor);
+    }
+
+    PlotLine(timestamp, middlePoint, middlePointColor);
+}
+
+// Function to backtest FVGs for analysis purposes
+void BacktestFVGs()
+{
+    for (int i = 1; i < ArraySize(fvgTimestamps); i++)
+    {
+        datetime timestamp = fvgTimestamps[i];
+        ENUM_DIRECTION direction = fvgDirections[i];
+        double middlePoint = fvgMiddlePoints[i];
+
+        // Perform backtesting analysis using FVG data
+        // ...
+    }
+}
+
+// Entry point of the program
+void OnStart()
+{
+    FindFVGs();
+    BacktestFVGs();
+}
